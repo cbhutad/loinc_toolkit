@@ -1,4 +1,4 @@
-package in.cdac.medinfo.loinc
+package in.cdac.medinfo.loinc;
 
 public class Constants {
 	public static final String LOINC = "Loinc.csv";
