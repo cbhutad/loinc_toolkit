@@ -1,4 +1,4 @@
-package in.cdac.medinfo.commons;
+package in.cdac.medinfo.loinc.commons;
 
 /**
  * @author cheenmayab
