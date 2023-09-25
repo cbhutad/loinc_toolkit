@@ -5,11 +5,19 @@
 	<version>2.0.0</version>
 	<name>loinc-lib</name>
 	<packaging>jar</packaging>
-	
+
 	<properties>
 		<java.version>11</java.version>
+		<log4j2.version>2.20.0</log4j2.version>
 	</properties>
 
 	<dependencies>
+		
+<!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-core</artifactId>
+    <version>5.3.27</version>
+</dependency>
 	</dependencies>
 </project>
