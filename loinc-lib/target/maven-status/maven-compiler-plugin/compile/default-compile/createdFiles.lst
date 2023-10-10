@@ -3,6 +3,7 @@ in\cdac\medinfo\loinc\commons\StringToClassTypesConverter.class
 in\cdac\medinfo\loinc\Constants.class
 in\cdac\medinfo\loinc\elasticsearch\ElasticSearchIndexCreator.class
 in\cdac\medinfo\loinc\commons\StringToStatusConverter.class
+in\cdac\medinfo\loinc\LoincIndexImplementor.class
 in\cdac\medinfo\loinc\elasticsearch\ElasticSearchConfiguration.class
 in\cdac\medinfo\loinc\PropertyReader.class
 in\cdac\medinfo\loinc\commons\EnumClassTypes.class
