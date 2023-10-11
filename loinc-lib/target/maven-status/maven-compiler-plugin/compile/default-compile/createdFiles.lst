@@ -7,6 +7,7 @@ in\cdac\medinfo\loinc\elasticsearch\ElasticSearchConfiguration.class
 in\cdac\medinfo\loinc\PropertyReader.class
 in\cdac\medinfo\loinc\commons\EnumClassTypes.class
 in\cdac\medinfo\loinc\exceptions\InternalServerException.class
+in\cdac\medinfo\loinc\response\serv\model\PartModel.class
 in\cdac\medinfo\loinc\commons\EnumPanelTypes.class
 in\cdac\medinfo\loinc\commons\StringToPanelTypesConverter.class
 in\cdac\medinfo\loinc\CSVReader.class
