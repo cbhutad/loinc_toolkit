@@ -1,3 +1,18 @@
+<<<<<<< HEAD
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\EnumClassTypes.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\exceptions\InternalServerException.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\StringToClassTypesConverter.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\response\serv\model\PartModel.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\CSVReader.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\Constants.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\EnumStatus.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\elasticsearch\ElasticSearchConfiguration.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\elasticsearch\ElasticSearchIndexCreator.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\StringToPanelTypesConverter.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\PropertyReader.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\EnumPanelTypes.java
+D:\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\StringToStatusConverter.java
+=======
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\elasticsearch\ElasticSearchConfiguration.java
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\EnumClassTypes.java
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\EnumPanelTypes.java
@@ -11,3 +26,4 @@ E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loin
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\elasticsearch\ElasticSearchIndexCreator.java
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\StringToStatusConverter.java
 E:\Softwares\Personal\loinc_toolkit\loinc-lib\src\main\java\in\cdac\medinfo\loinc\commons\StringToClassTypesConverter.java
+>>>>>>> 4337b7f80b221af62e9e009d7f6fc65dcca0f123
