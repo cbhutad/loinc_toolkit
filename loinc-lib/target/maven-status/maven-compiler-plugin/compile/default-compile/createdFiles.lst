@@ -1,7 +1,9 @@
 in\cdac\medinfo\loinc\commons\EnumStatus.class
 in\cdac\medinfo\loinc\commons\StringToClassTypesConverter.class
+in\cdac\medinfo\loinc\exceptions\CodeNotFoundException.class
 in\cdac\medinfo\loinc\Constants.class
 in\cdac\medinfo\loinc\elasticsearch\ElasticSearchIndexCreator.class
+in\cdac\medinfo\loinc\ElasticSearchClient.class
 in\cdac\medinfo\loinc\commons\StringToStatusConverter.class
 in\cdac\medinfo\loinc\LoincIndexImplementor.class
 in\cdac\medinfo\loinc\elasticsearch\ElasticSearchConfiguration.class
