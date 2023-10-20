@@ -36,6 +36,69 @@ public class ElasticSearchClient {
     private static final Logger logger = LogManager.getLogger(ElasticSearchClient.class);
 
     /*
+     * This method returns the methods available in loinc for the given text.
+     *
+     */
+
+   public List<PartModel> method(String text) {
+       List<PartModel> methods = new ArrayList<PartModel>();
+
+       try {
+           BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+           boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("METHOD").build()._toQuery());
+
+           if(text != null && text.compareToIgnoreCase("all") != 0) {
+               String[] fieldNames = {"PartName", "PartDisplayName"};
+               boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+           }
+
+           BoolQuery boolQuery = boolQueryBuilder.build();
+           Query query = new Query.Builder().bool(boolQuery).build();
+
+           SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+           SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+           List<Hit<Object>> hits = searchResponse.hits().hits();
+           
+           TotalHits totalHits = searchResponse.hits().total();
+           long count = totalHits.value();
+           System.out.println(count);
+
+           if(count == 0) {
+               throw new NoSuchElementException("ERROR: method with provied text does not exist");
+           }
+
+           for(Hit<Object> hit : hits) {
+               PartModel model = new PartModel();
+               Object source = hit.source();
+
+               @SuppressWarnings("unchecked")
+               Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+               model.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+               model.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+               model.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+               model.setSTATUS((String) sourceAsMap.get("Status"));
+               methods.add(model);
+           }
+
+       } catch (NoSuchElementException ex) {
+           logger.error(ex.getMessage());
+           throw new CodeNotFoundException(ex.getMessage());
+       } catch (ElasticsearchException ex) {
+           logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
+           throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
+       } catch (Exception ex) {
+           logger.error("ERROR : " + ex.getMessage());
+           throw new InternalServerException("ERROR : " + ex.getMessage());
+       }
+       logger.info("Methods API call completed");
+       return methods;
+   }
+
+
+
+    /*
      * This method returns the components available in loinc for given text
      * @throws IOException.
      * 
