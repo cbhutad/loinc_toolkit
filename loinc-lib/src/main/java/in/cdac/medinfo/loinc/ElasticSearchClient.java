@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
-import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregateBase;
 import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -35,76 +34,387 @@ public class ElasticSearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticSearchClient.class);
 
-    /*
-     * This method returns the methods available in loinc for the given text.
-     *
+    /**
+     * 
+     * @param text
+     * @return List<PartModel>
+     * @throws IOException This method gives list of classes available in loinc.
      */
 
-   public List<PartModel> method(String text) {
-       List<PartModel> methods = new ArrayList<PartModel>();
+    public List<PartModel> classes(String text) throws IOException {
+        List<PartModel> classes = new ArrayList<>();
 
-       try {
-           BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
-           boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("METHOD").build()._toQuery());
+        try {
 
-           if(text != null && text.compareToIgnoreCase("all") != 0) {
-               String[] fieldNames = {"PartName", "PartDisplayName"};
-               boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
-           }
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("CLASS").build()._toQuery());
 
-           BoolQuery boolQuery = boolQueryBuilder.build();
-           Query query = new Query.Builder().bool(boolQuery).build();
+            if(text != null && text.compareToIgnoreCase("all") != 0 && !text.equals("-")) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
 
-           SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
-           SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
 
-           List<Hit<Object>> hits = searchResponse.hits().hits();
-           
-           TotalHits totalHits = searchResponse.hits().total();
-           long count = totalHits.value();
-           System.out.println(count);
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
 
-           if(count == 0) {
-               throw new NoSuchElementException("ERROR: method with provied text does not exist");
-           }
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
 
-           for(Hit<Object> hit : hits) {
-               PartModel model = new PartModel();
-               Object source = hit.source();
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : the scales do not exist for the provided text");
+            }
 
-               @SuppressWarnings("unchecked")
-               Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
 
-               model.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
-               model.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
-               model.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
-               model.setSTATUS((String) sourceAsMap.get("Status"));
-               methods.add(model);
-           }
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
 
-       } catch (NoSuchElementException ex) {
-           logger.error(ex.getMessage());
-           throw new CodeNotFoundException(ex.getMessage());
-       } catch (ElasticsearchException ex) {
-           logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
-           throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
-       } catch (Exception ex) {
-           logger.error("ERROR : " + ex.getMessage());
-           throw new InternalServerException("ERROR : " + ex.getMessage());
-       }
-       logger.info("Methods API call completed");
-       return methods;
-   }
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                classes.add(partModel);
+            }   
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        logger.info("Classes API completed");
+        return classes;
+    }
+
+    /**
+     * 
+     * @param text
+     * @return List<PartModel>
+     * @throws IOException This method gives list of systems available in loinc.
+     */
+
+    public List<PartModel> systems(String text) throws IOException {
+        List<PartModel> systems = new ArrayList<>();
+
+        try {
+
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("SYSTEM").build()._toQuery());
+
+            if(text != null && text.compareToIgnoreCase("all") != 0 && !text.equals("-")) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : the systems do not exist for the provided text");
+            }
+
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                systems.add(partModel);
+            }   
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        logger.info("Systems API completed");
+        return systems;
+    }
+
+    /**
+     * 
+     * @param text
+     * @return List<PartModel>
+     * @throws IOException This method gives list of scales available in loinc.
+     */
+
+    public List<PartModel> scale(String text) throws IOException {
+        List<PartModel> scales = new ArrayList<>();
+
+        try {
+
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("SCALE").build()._toQuery());
+
+            if(text != null && text.compareToIgnoreCase("all") != 0 && !text.equals("-")) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : the scales do not exist for the provided text");
+            }
+
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                scales.add(partModel);
+            }   
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch client");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        logger.info("Scales API completed");
+        return scales;
+    }
+
+    /**
+     * 
+     * @param text
+     * @return List<PartModel>
+     * @throws ElasticsearchException
+     * @throws IOException This method gives list of Properties available in loinc.
+     */
+
+    public List<PartModel> property(String text) throws IOException {
+        List<PartModel> properties = new ArrayList<>();
+
+        try {
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("PROPERTY").build()._toQuery());
+
+            if(text != null && text.compareToIgnoreCase("all") != 0) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : There is no properties exist for the text");
+            }
+
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                properties.add(partModel);
+            }
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        logger.info("Properties API completed");
+        return properties;
+    }
 
 
-
-    /*
-     * This method returns the components available in loinc for given text
-     * @throws IOException.
+    /**
+     * 
+     * @param text
+     * @return List<PartModel>
+     * @throws IOException This method gives list of all timings available in Loinc.
      * 
      */
 
-    public List<PartModel> component(String text) {
+    public List<PartModel> timing(String text) throws IOException {
+        List<PartModel> timings = new ArrayList<>();
+
+        try {
+
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("METHOD").build()._toQuery());
+
+            if(text != null && text.compareToIgnoreCase("all") != 0) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : No timings found for the provided text");
+            }
+
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                timings.add(partModel);
+            }
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check your connection to Elasticsearch");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check your connection to Elasticsearch");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException(" ERROR : " + ex.getMessage());
+        }
+        logger.info("Timings API completed");
+        return timings;
+    }
+
+
+    /**
+	 * @param text
+	 * @return List<PartModel>
+	 * @throws IOException This method gives list of all methods available in Loinc.
+	 */
+
+    public List<PartModel> methods(String text) throws IOException {
+        List<PartModel> methods = new ArrayList<PartModel>();
+
+        try {
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+            boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PartTypeName").query("METHOD").build()._toQuery());
+
+            if(text != null && text.compareToIgnoreCase("all") != 0) {
+                String[] fieldNames = {"PartName", "PartDisplayName"};
+                boolQueryBuilder.must(QueryBuilders.multiMatch().fields(text, fieldNames).query(text).build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loincpart").query(query).from(0).size(10000).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : method with the provided text does not exist");
+            }
+
+            for(Hit<Object> hit : hits) {
+                PartModel partModel = new PartModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                partModel.setLOINC_PART_NUMBER((String) sourceAsMap.get("PartNumber"));
+                partModel.setLOINC_PART_NAME((String) sourceAsMap.get("PartName"));
+                partModel.setLOINC_PART_DESCRIPTION((String) sourceAsMap.get("PartDisplayName"));
+                partModel.setSTATUS((String) sourceAsMap.get("Status"));
+                methods.add(partModel);
+            }
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with Elasticsearch");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with Elasticsearch");
+        } catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        } 
+        logger.info("Methods API completed");
+        return methods;
+    }
+    
+
+    /**
+     * @param text
+     * @return PartModel POJO
+     * @throws IOException This method returns the components available in loinc for given text.
+     * 
+     */
+
+    public List<PartModel> component(String text) throws IOException {
         List<PartModel> components = new ArrayList<>();
         
         try {
@@ -159,7 +469,7 @@ public class ElasticSearchClient {
     /*
      * This method gives list of all units available in loinc.
      * @throws IOException.
-     * 
+     * @return List<String> 
      */
 
     public List<String> exampleUnits() throws IOException {
