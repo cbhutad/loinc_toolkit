@@ -4,6 +4,7 @@
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/commons/StringToStatusConverter.java
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/ElasticSearchClient.java
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/commons/EnumClassTypes.java
+/home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/response/serv/model/PanelModel.java
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/LoincIndexImplementor.java
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/Constants.java
 /home/cbhutad/Work/loinc_toolkit/loinc-lib/src/main/java/in/cdac/medinfo/loinc/commons/EnumStatus.java
