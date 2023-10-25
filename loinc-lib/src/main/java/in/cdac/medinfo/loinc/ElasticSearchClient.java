@@ -15,9 +15,11 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
+import in.cdac.medinfo.loinc.commons.EnumStatus;
 import in.cdac.medinfo.loinc.elasticsearch.ElasticSearchConfiguration;
 import in.cdac.medinfo.loinc.exceptions.CodeNotFoundException;
 import in.cdac.medinfo.loinc.exceptions.InternalServerException;
+import in.cdac.medinfo.loinc.response.serv.model.PanelModel;
 import in.cdac.medinfo.loinc.response.serv.model.PartModel;
 
 import java.io.IOException;
@@ -33,6 +35,77 @@ import org.apache.logging.log4j.LogManager;
 public class ElasticSearchClient {
 
     private static final Logger logger = LogManager.getLogger(ElasticSearchClient.class);
+
+    /**
+     * 
+     * @param className
+     * @param status
+     * @param panelType
+     * @return List<PanelModel>
+     * @throws IOException
+     * 
+     * Provides facility to retrieve information of particular panel by specifying class parameter.
+     */
+
+    public List<PanelModel> expandPanel(String className, String panelType, String status) {
+        List<PanelModel> panels = new ArrayList<>();
+
+        try {
+
+            if(className != null) {
+                BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASS").query(className).build()._toQuery());
+
+                if(panelType != null && panelType.compareToIgnoreCase("all") != 0) {
+                    boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PanelType").query(panelType).build()._toQuery());
+                }
+                if(status != null && status.compareToIgnoreCase("all") != 0) {
+                    boolQueryBuilder.must(QueryBuilders.matchPhrase().field("STATUS").query(status).build()._toQuery());
+                }
+
+                BoolQuery boolQuery = boolQueryBuilder.build();
+                Query query = new Query.Builder().bool(boolQuery).build();
+
+                SearchRequest searchRequest = new SearchRequest.Builder().index("loinc").query(query).from(0).size(10000).build();
+                SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+                List<Hit<Object>> hits = searchResponse.hits().hits();
+                TotalHits totalHits = searchResponse.hits().total();
+                long count = totalHits.value();
+
+                if(count == 0) {
+                    throw new NoSuchElementException("ERROR : class name " + className + " with given filteration parameter not found or class does not belong to any panel");
+                }
+
+                for(Hit<Object> hit : hits) {
+                    PanelModel panelModel = new PanelModel();
+                    Object source = hit.source();
+
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                    panelModel.setLOINC_NUM((String) sourceAsMap.get("LOINC_NUM"));
+                    panelModel.setLONG_COMMON_NAME((String) sourceAsMap.get("LONG_COMMON_NAME"));
+
+                    panels.add(panelModel);
+                }
+
+            } else {
+                throw new NoSuchElementException("ERROR : class name " + className + " with given filteration parameter not found or class does not belong to any panel");
+            }
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException(ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error("ERROR : " + ex.getMessage() + " Please check connection with Elasticsearch");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with Elasticsearch");
+        }catch (Exception ex) {
+            logger.error("ERROR : " + ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        logger.info("Completed ExpandPanels API");
+        return panels;
+    } 
 
     /**
      * 
