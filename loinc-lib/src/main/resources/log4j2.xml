@@ -1,22 +1,32 @@
 <Configuration status="warn">
 
-	<Properties name="log_folder">d:/loinc_toolkit/logs</Properties>
-
+	<Properties>
+		<Property name="log_folder">/home/cbhutad/Work/loinc_toolkit/logs/loinc_lib/</Property>
+	</Properties>
 
 	<Appenders>
 		<Console name="console" target="SYSTEM_OUT">
 			<PatternLayout pattern="%c %d{yyyy-mm-dd HH:mm:ss} %-5p: %m%n" />
 		</Console>
 
-		<File name="loinc_lib" fileName="loinc_lib.log">
+		<File name="property_reader" fileName="${log_folder}/property_reader.log">
 			<PatternLayout pattern="${log_folder}/%c %d{yyyy-mm-dd HH:mm:ss} %-5p: %m%n" />
 		</File>
+
+		<File name="csv_reader" fileName="${log_folder}/csv_reader.log">
+			<PatternLayout pattern="${log_folder}/%c %d{yyyy-mm-dd HH:mm:ss} %-5p: %m%n" />
+		</File>
+		
 	</Appenders>
 
 	<Loggers>
 
 		<Logger level="trace" name="in.cdac.medinfo.loinc.PropertyReader">
-			<AppenderRef ref="loinc_lib"/>
+			<AppenderRef ref="property_reader"/>
+		</Logger>
+
+		<Logger level="trace" name="in.cdac.medinfo.loinc.CSVReader">
+			<AppenderRef ref="csv_reader"/>
 		</Logger>
 
 		<Root level="error">
