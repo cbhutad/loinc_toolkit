@@ -1,8 +1,10 @@
+in/cdac/medinfo/loinc/response/serv/model/Model.class
 in/cdac/medinfo/loinc/commons/StringToClassTypesConverter.class
 in/cdac/medinfo/loinc/exceptions/InternalServerException.class
 in/cdac/medinfo/loinc/commons/StringToPanelTypesConverter.class
 in/cdac/medinfo/loinc/elasticsearch/ElasticSearchConfiguration.class
 in/cdac/medinfo/loinc/commons/EnumClassTypes.class
+in/cdac/medinfo/loinc/response/serv/model/ChildModel.class
 in/cdac/medinfo/loinc/response/serv/model/PartModel.class
 in/cdac/medinfo/loinc/LoincIndexImplementor.class
 in/cdac/medinfo/loinc/ElasticSearchClient.class
