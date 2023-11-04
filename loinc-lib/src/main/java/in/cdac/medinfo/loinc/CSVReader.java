@@ -27,9 +27,9 @@ public class CSVReader {
             CsvSchema bootstrap = CsvSchema.emptySchema().withHeader();
             CsvMapper csvMapper = new CsvMapper();
             csvToMapCreator = csvMapper.reader().forType(Map.class).with(bootstrap).readValues(file);
-            logger.info("Reading data from csv file");
+            logger.info("Reading data from csv file" + file.getName());
         } catch(FileNotFoundException ex) {
-            logger.error(err + ex.getMessage());
+            logger.error(ex.getMessage());
             throw new InternalServerException(err + ex.getMessage() + ", please enter correct file path in configuration page");
         } catch(Exception ex) {
             logger.error(err + ex.getMessage());
