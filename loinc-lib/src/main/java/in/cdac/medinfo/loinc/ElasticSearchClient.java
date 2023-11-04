@@ -14,16 +14,20 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhrasePrefixQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
+import co.elastic.clients.json.JsonData;
+import in.cdac.medinfo.loinc.commons.EnumClassTypes;
 import in.cdac.medinfo.loinc.commons.EnumStatus;
 import in.cdac.medinfo.loinc.elasticsearch.ElasticSearchConfiguration;
 import in.cdac.medinfo.loinc.exceptions.CodeNotFoundException;
 import in.cdac.medinfo.loinc.exceptions.InternalServerException;
 import in.cdac.medinfo.loinc.response.serv.model.PanelModel;
 import in.cdac.medinfo.loinc.response.serv.model.PartModel;
+import in.cdac.medinfo.loinc.response.serv.model.SearchModel;
 import in.cdac.medinfo.loinc.response.serv.model.ChildModel;
 import in.cdac.medinfo.loinc.response.serv.model.Model;
 
@@ -145,43 +149,27 @@ public class ElasticSearchClient {
                         long grandChildrenCount = grandChildTotalHits.value();
 
                         if (grandChildrenCount != 0) {
+                         
                             List<ChildModel> grandChildList = new ArrayList<>();
-                            
-                            for(Hit<Object> grandChild : grandChildHits) {
+
+                            for(Hit<Object> hitG3 : grandChildHits) {
 
                                 ChildModel grandChildConcept = new ChildModel();
-                                Object grandChildSource = grandChild.source();
+                                Object grandChildSource = hitG3.source();
 
                                 @SuppressWarnings("unchecked")
-                                Map<String,Object> grandChildSourceAsMap = (Map<String, Object>) grandChildSource;
+                                Map<String, Object> grandChildSourceAsMap = (Map<String, Object>) grandChildSource;
 
                                 String grandChildLoinc = (String) grandChildSourceAsMap.get("Loinc");
-                                if(loincChild.compareToIgnoreCase(grandChildLoinc) != 0) {
-                                    grandChildConcept.setLOINC(grandChildLoinc);
-                                    grandChildConcept.setExample_UCUM_UNITS((String)
-                                    grandChildSourceAsMap.get("EXAMPLE_UCUM_UNITS"));
-                                    grandChildConcept.setName((String) grandChildSourceAsMap.get("SHORTNAME"));
-                                    grandChildConcept.setObservationRequiredInPanel((String) grandChildSourceAsMap.get("ObservationRequiredInPanel"));
-                                    grandChildConcept.setGrandChildren(new ArrayList<>());
-
-                                    grandChildList.add(grandChildConcept);
+                                if(grandChildLoinc.compareTo(loincChild) != 0) {
+                                    grandChildList.add(setChildModel(grandChildSourceAsMap, grandChildConcept));
                                 }
                             }
                             childConcept.setGrandChildren(grandChildList);
-
                         }
-
-                        childConcept.setExample_UCUM_UNITS((String) childSourceAsMap.get("EXAMPLE_UCUM_UNITS"));
-                        childConcept.setLOINC(loincChild);
-                        childConcept.setName((String) childSourceAsMap.get("SHORTNAME"));
-                        childConcept.setObservationRequiredInPanel((String) childSourceAsMap.get("ObservationRequiredInPanel"));
-
-                        childList.add(childConcept);
+                        childList.add(setChildModel(childSourceAsMap, childConcept));
                     }
-
-
                 }
-
                 concept.setChildren(childList);
             }
             
@@ -198,6 +186,134 @@ public class ElasticSearchClient {
 
         return concept;
     }
+
+    /**
+     * @param sourceAsMap
+     * @param childConcept
+     * @return ChildModel
+     * @throws IOException
+     */
+
+    public ChildModel setChildModel(Map<String,Object> sourceAsMap, ChildModel childConcept) throws IOException {
+        ChildModel concept = new ChildModel();
+
+        concept.setLOINC((String) sourceAsMap.get("Loinc"));
+        concept.setObservationRequiredInPanel((String) sourceAsMap.get("ObservationRequiredInPanel"));
+        
+        MatchPhrasePrefixQuery matchPhrasePrefixQuery = new MatchPhrasePrefixQuery.Builder().field("LOINC_NUM").query(concept.getLOINC()).build();
+        Query query = new Query.Builder().matchPhrasePrefix(matchPhrasePrefixQuery).build();
+        SearchRequest searchRequest = new SearchRequest.Builder().index("loinc").query(query).build();
+        SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
+
+        List<Hit<Object>> hits = searchResponse.hits().hits();
+
+        Object source = hits.get(0).source();
+        
+        @SuppressWarnings("unchecked")
+        Map<String,Object> sourceMap = (Map<String, Object>) source;
+
+        concept.setExample_UCUM_UNITS((String) sourceMap.get("EXAMPLE_UCUM_UNITS"));
+        concept.setName((String) sourceMap.get("SHORTNAME"));
+
+        return concept;
+    }
+
+    /**
+     * 
+     * @param Boolean sortByRank 
+     * @param EnumClassTypes type 
+     * @param EnumStatus status
+     * @param int limit
+     * @param String className
+     * @param String component
+     * @param String exampleUnits
+     * @param String panelType
+     * @param String property
+     * @param String method
+     * @param String scale
+     * @param String system
+     * @param String term
+     * @param String timing
+     * @return List<SearchModel>
+     * @throws 
+     */
+    
+    public List<SearchModel> search(Boolean sortByRank, EnumClassTypes type, EnumStatus status, int limit, String className, String component, String exampleUnits, String panelType, String property, String method, String scale, String system, String term, String timing) {
+        
+        List<SearchModel> concepts = new ArrayList<>();
+
+        try {
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+
+            if(term != null ) {
+
+                List<String> fieldNamesList = new ArrayList<String>() {
+                    {
+                        add("COMPONENT");
+                        add("DisplayName");
+                        add("LONG_COMMON_NAME");
+                        add("RELATEDNAMES2");
+                        add("SHORTNAME");
+                        add("SYSTEM");
+                    }
+                };
+
+                //Case 1 : term contains ","~. Example -> Component:"functional panel"~1 of proximity search.
+                if(term.contains("\"") && term.contains("\"~")) {
+                    if(term.contains(":")) {
+                        String[] terms = term.replaceAll("\"", "").split(":");
+                        String[] data = terms[1].split("~");
+                        boolQueryBuilder.must(QueryBuilders.matchPhrase().field(terms[0]).query(data[1]).slop(Integer.parseInt(data[1])).build()._toQuery());
+                    } else {
+                        String[] terms = term.replaceAll("\"", "").split("~");
+                        boolQueryBuilder.must(QueryBuilders.matchPhrase().field("LONG_COMMON_NAME").query(terms[0]).slop(Integer.parseInt(terms[1])).build()._toQuery());
+                    }
+                }
+                //Case 2 : term contians " +", " -", "~", "(" or ")". Example -> bacillus +anthracis, (influenza OR rhinovirus), -haemophilus
+                else if(term.contains(" +") || term.contains(" -") || term.contains("~") || (term.contains("(") && term.contains(")"))) {
+                    if(term.contains("and") || term.contains("or")) {
+                        boolQueryBuilder.should(QueryBuilders.queryString().query(term).build()._toQuery());
+                    } else {
+                        boolQueryBuilder.must(QueryBuilders.queryString().query(term).build()._toQuery());
+                    }
+                }
+                //Case 3 : term contains ":" and "(", "[", ")", "]". Example -> VersionLastChanged:[2 to 2.48] also called range search with lower and upper bounds
+                else if(term.contains(":") && (term.contains("(") || term.contains("[")) && (term.contains(")") || term.contains("]"))) {
+                    String[] parameters = term.split(":");
+                    String range = parameters[1].replaceAll("(","").replaceAll("[", "").replaceAll(")","").replaceAll("]", "");
+                    String[] ranges = range.split("to");
+                    boolQueryBuilder.must(QueryBuilders.range().field(parameters[0]).from(JsonData.of(ranges[0])).to(JsonData.of(ranges[1])).build()._toQuery());
+                }
+                //Case 4 : term contains "*" or "?". Wildcard characters
+                else if(term.contains("*") || term.contains("?")) {
+                    if(term.contains(":")) {
+                        String[] terms = term.split(":");
+                        boolQueryBuilder.must(QueryBuilders.wildcard().field(terms[0]).queryName(terms[1]).build()._toQuery());
+                    } else {
+                        boolQueryBuilder.must(QueryBuilders.wildcard().field("LONG_COMMON_NAME").queryName(term).build()._toQuery());
+                    }
+                }
+                //Case 5 : term contains " "
+                else if(term.contains(" ")) {
+                    String[] terms = term.split(" ");
+                    for (String temp : terms) {
+                        boolQueryBuilder.must(QueryBuilders.multiMatch().fields(fieldNamesList).query(temp).type(TextQueryType.BoolPrefix).build()._toQuery());
+                    }
+                }
+                else {
+                    boolQueryBuilder.must(QueryBuilders.multiMatch().fields(fieldNamesList).query(term).type(TextQueryType.BoolPrefix).build()._toQuery());
+                }
+
+            }
+
+            
+        } catch (Exception ex) {
+            logger.error(ex.getMessage());
+            throw new InternalServerException("ERROR : " + ex.getMessage());
+        }
+        return concepts;
+    }
+
 
     /**
      * 
