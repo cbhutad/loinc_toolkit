@@ -2,3 +2,4 @@
 /loinc-lib/target/*
 /loinc-lib/.classpath
 /.vim
+/logs
