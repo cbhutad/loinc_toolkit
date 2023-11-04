@@ -26,7 +26,7 @@ public class PropertyReader {
 			PropertyReader.elasticsearchHost = elasticsearchHost;
 			PropertyReader.elasticsearchPort = Integer.parseInt(elasticsearchPort);
 		} catch (Exception err) {
-			logger.error("ERROR :" + err.getMessage() + " Please enter correct Configuration details");
+			logger.error(err.getMessage() + " Please enter correct Configuration details");
 			throw new InternalServerException("ERROR :" + err.getMessage() + " Please enter correct Configuration details");
 		}
 
