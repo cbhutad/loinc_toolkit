@@ -306,12 +306,61 @@ public class ElasticSearchClient {
 
             }
 
+            if(system != null && (system.compareToIgnoreCase("all") != 0) && getPartNameList(systems("all")).contains(system)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("SYSTEM").query(system).build()._toQuery());
+            } else if(system != null && (system.compareToIgnoreCase("all") != 0) && !(getPartNameList(systems("all")).contains(system))) {
+                logger.error(system + " is not a valid system, please enter a valid system");
+                throw new NoSuchElementException("ERROR : " + system + " is not a valid system, please enter a valid system");
+            }
+
+            if(scale != null && (scale.compareToIgnoreCase("all") != 0) && getPartNameList(scale("all")).contains(scale)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("SCALE_TYP").query(scale).build()._toQuery());
+            } else if(scale != null && (scale.compareToIgnoreCase("all") != 0) && !(getPartNameList(scale("all")).contains(scale))) {
+                logger.error(scale + " is not a valid scale type, enter a valid scale type");
+                throw new NoSuchElementException("ERROR : " + scale + " is not a valid scale type, enter a valid scale type");
+            }
+
+            if(className != null && (className.compareToIgnoreCase("all") != 0) && getPartNameList(classes("all")).contains(className)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASS").query(className).build()._toQuery());
+            } else if(className != null && (className.compareToIgnoreCase("all") != 0) && !(getPartNameList(classes("all")).contains(className))) {
+                logger.error(className + " is not a valid class, please enter a valid class");
+                throw new NoSuchElementException("ERROR " + className + " is not a valid class, please enter a valid class");
+            }
+
+            if(property != null && (property.compareToIgnoreCase("all") != 0) && getPartNameList(property("all")).contains(property)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PROPERTY").query(property).build()._toQuery());
+            } else if(property != null && (property.compareToIgnoreCase("all") != 0) && !(getPartNameList(property("all")).contains(property))) {
+                logger.error(property + " is not a valid property, please enter a valid property");
+                throw new NoSuchElementException("ERROR " + property + " is not a valid property, please enter a valid property");
+            }
+            
+            if(timing != null && (timing.compareToIgnoreCase("all") != 0) && getPartNameList(timing("all")).contains(timing)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("TIME_ASPCT").query(timing).build()._toQuery());
+            } else if(timing != null && (timing.compareToIgnoreCase("all") != 0) && !(getPartNameList(timing("all")).contains(timing))) {
+                logger.error(timing + " is not a valid time aspect, please enter a valid time aspect");
+                throw new NoSuchElementException("ERROR : " + timing + " is not a valid time aspect, please enter a valid time aspect");
+            }
+
+            if(method != null && (method.compareToIgnoreCase("all") != 0) && getPartNameList(methods("all")).contains(method)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("METHOD_TYP").query(method).build()._toQuery());
+            } else if(method != null && (method.compareToIgnoreCase("all") != 0) && !(getPartNameList(methods("all")).contains(method))) {
+                logger.error(method + " is not a valid method type, please enter a valid method type");
+                throw new NoSuchElementException("ERROR : " + method + " is not a valid method type, please enter a valid method type");
+            }
             
         } catch (Exception ex) {
             logger.error(ex.getMessage());
             throw new InternalServerException("ERROR : " + ex.getMessage());
         }
         return concepts;
+    }
+
+    public List<String> getPartNameList(List<PartModel> supportAPIReturnList) {
+        List<String> returnList = new ArrayList<>();
+        for (PartModel model : supportAPIReturnList) {
+            returnList.add(model.getLOINC_PART_NAME());
+        }
+        return returnList;
     }
 
 
