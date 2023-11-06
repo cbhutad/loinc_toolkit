@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
 
@@ -347,11 +348,117 @@ public class ElasticSearchClient {
                 logger.error(method + " is not a valid method type, please enter a valid method type");
                 throw new NoSuchElementException("ERROR : " + method + " is not a valid method type, please enter a valid method type");
             }
+
+            if(exampleUnits != null && (exampleUnits.compareToIgnoreCase("all") != 0) && exampleUnits().contains(exampleUnits)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("EXAMPLE_UCUM_UNITS").query(exampleUnits).build()._toQuery());
+            } else if(exampleUnits != null && (exampleUnits.compareToIgnoreCase("all") != 0) && !(exampleUnits().contains(exampleUnits))) {
+                logger.error(exampleUnits + " is not a valid method type, please enter a valid example unit");
+                throw new NoSuchElementException("ERROR : " + exampleUnits + " is not a valid method type, please enter a valid example unit");
+            }
+
+            if(component != null && (component.toLowerCase().compareToIgnoreCase("all") != 0)) {
+                if(component.contains(" ")) {
+                    String[] terms = component.split(" ");
+                    for(String unitterm : terms) {
+                        boolQueryBuilder.must(QueryBuilders.matchPhrase().field("COMPONENT").query(unitterm).build()._toQuery());
+                    }
+                } else {
+                    boolQueryBuilder.must(QueryBuilders.matchPhrase().field("COMPONENT").query(component).build()._toQuery());
+                }
+            }
+
+            if(panelType != null && (panelType.compareToIgnoreCase("all") != 0)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("PanelType").query(panelType).build()._toQuery());
+            }
+
+            if(status != null && !(status.equals(EnumStatus.ALL))) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("STATUS").query(status.name()).build()._toQuery());
+            }
+
+            if(type.equals(EnumClassTypes.LABORATORY)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASSTYPE").query("1").build()._toQuery());
+            } else if(type.equals(EnumClassTypes.CLINICAL)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASSTYPE").query("2").build()._toQuery());
+            } else if(type.equals(EnumClassTypes.ATTACHMENT)) {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASSTYPE").query("3").build()._toQuery());
+            } else {
+                boolQueryBuilder.must(QueryBuilders.matchPhrase().field("CLASSTYPE").query("4").build()._toQuery());
+            }
+
+            BoolQuery boolQuery = boolQueryBuilder.build();
+            Query query = new Query.Builder().bool(boolQuery).build();
+            SearchRequest searchRequest = new SearchRequest.Builder().index("loinc").query(query).from(0).size(limit).build();
+            SearchResponse<Object> searchResponse = ElasticSearchConfiguration.elasticsearchClient.search(searchRequest, Object.class);
             
+            List<Hit<Object>> hits = searchResponse.hits().hits();
+            TotalHits totalHits = searchResponse.hits().total();
+            long count = totalHits.value();
+
+            if(count == 0) {
+                throw new NoSuchElementException("ERROR : " + term + " is not present, please enter a valid term");
+            }
+
+
+            for(Hit<Object> hit : hits) {
+                SearchModel searchModel = new SearchModel();
+                Object source = hit.source();
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sourceAsMap = (Map<String, Object>) source;
+
+                searchModel.setCLASS((String) sourceAsMap.get("CLASS"));
+
+                String classtype = (String) sourceAsMap.get("CLASSTYPE");
+                if(classtype.compareToIgnoreCase("1") == 0) {
+                    searchModel.setCLASSTYPE("Laboratory");
+                } else if(classtype.compareToIgnoreCase("2") == 0) {
+                    searchModel.setCLASSTYPE("Clinical");
+                } else if(classtype.compareToIgnoreCase("3") == 0) {
+                    searchModel.setCLASSTYPE("Attachment");
+                } else {
+                    searchModel.setCLASSTYPE("Survey");
+                }
+
+                searchModel.setCOMPONENT((String) sourceAsMap.get("COMPONENT"));
+                searchModel.setDisplayName((String) sourceAsMap.get("DisplayName"));
+                searchModel.setExampleUnits((String) sourceAsMap.get("EXAMPLE_UCUM_UNITS"));
+                searchModel.setLOINC((String) sourceAsMap.get("LOINC_NUM"));
+                searchModel.setLONG_COMMON_NAME((String) sourceAsMap.get("LONG_COMMON_NAME"));
+                searchModel.setMETHOD_TYP((String) sourceAsMap.get("METHOD_TYP"));
+                searchModel.setORDER_OBS((String) sourceAsMap.get("ORDER_OBS"));
+                searchModel.setPROPERTY((String) sourceAsMap.get("PROPERTY"));
+                searchModel.setRelatedNames((String) sourceAsMap.get("RELATEDNAMES2"));
+                searchModel.setSCALE_TYP((String) sourceAsMap.get("SCALE_TYP"));
+                searchModel.setSTATUS((String) sourceAsMap.get("STATUS"));
+                searchModel.setSYSTEM((String) sourceAsMap.get("SYSTEM"));
+                searchModel.setShortName((String) sourceAsMap.get("SHORTNAME"));
+                searchModel.setTIME_ASPCT((String) sourceAsMap.get("TIME_ASPCT"));
+                searchModel.setVersionFirstReleased((String) sourceAsMap.get("VersionFirstReleased"));
+                searchModel.setVersionLastChanged((String) sourceAsMap.get("VersionLastChanged"));
+                
+                String commonTestRank = (String) sourceAsMap.get("COMMON_TEST_RANK");
+                Integer ctr = Integer.parseInt(commonTestRank);
+                searchModel.setCommonTestRank(ctr);
+                concepts.add(searchModel);
+
+            }
+
+            if(sortByRank) {
+                Collections.sort(concepts, Collections.reverseOrder());
+            }
+
+        } catch (NoSuchElementException ex) {
+            logger.error(ex.getMessage());
+            throw new CodeNotFoundException("ERROR : " + ex.getMessage());
+        } catch (ElasticsearchException ex) {
+            logger.error(ex.getMessage() + " Please check connection with elasticsearch");
+            throw new InternalServerException("ERROR : " + ex.getMessage() + " Please check connection with elasticsearch");
         } catch (Exception ex) {
             logger.error(ex.getMessage());
             throw new InternalServerException("ERROR : " + ex.getMessage());
         }
+
+        logger.info("In search API");
         return concepts;
     }
 
