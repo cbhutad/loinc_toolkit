@@ -32,6 +32,7 @@ public class ElasticSearchIndexCreator {
                 indexList.add(index);
                 DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest.Builder().index(indexList).build();
                 ElasticSearchConfiguration.elasticsearchClient.indices().delete(deleteIndexRequest);
+                logger.info("Index " + index + " already Existed. Deleted and Created a new one instead");
             }
             for(Map<String, Object> jsonMap : data) {
                 bulkoperations.add(IndexOperation.of(c -> c.document(jsonMap).id(Integer.toString(counter[0]++)))._toBulkOperation());
